@@ -1,4 +1,4 @@
-FROM golang:1.10
+FROM golang:1.10-alpine
 LABEL maintainer="Benjamin R. Haskell <go@benizi.com>"
 ADD httpecho.go /src/
 WORKDIR /src

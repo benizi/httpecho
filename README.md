@@ -10,18 +10,30 @@ I got sick of trying to make an HTTP echo server using `socat`¹.
 
 # Usage
 
-```sh
-$ docker network create --subnet 10.11.12.0/24 testnet
-0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
-$ docker run --network testnet -d --name httpecho benizi/httpecho
-456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123
-$ docker run --network testnet --rm appropriate/curl http://httpecho/wat
-Method: GET
-Path: /wat
-Request Headers:
-  User-Agent: curl/7.59.0
-  Accept: */*
-```
+- Create a Docker network (for testing)
+
+  ```sh
+  $ docker network create --subnet 10.11.12.0/24 testnet
+  0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
+  ```
+
+- Run the echo server with a nice name
+
+  ```sh
+  $ docker run --network testnet --network-alias echo -d benizi/httpecho
+  456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123
+  ```
+
+- Test it with cURL
+
+  ```sh
+  $ docker run --network testnet --rm appropriate/curl http://echo/wat
+  Method: GET
+  Path: /wat
+  Request Headers:
+    User-Agent: curl/7.59.0
+    Accept: */*
+  ```
 
 # Features
 

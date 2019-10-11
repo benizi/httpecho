@@ -3,6 +3,7 @@ package main
 import (
 	"bytes"
 	"encoding/json"
+	"flag"
 	"fmt"
 	"io"
 	"io/ioutil"
@@ -182,7 +183,29 @@ func wantsJSON(req *http.Request) bool {
 	return false
 }
 
+type hteeteep struct {
+	w    http.ResponseWriter
+	also io.Writer
+}
+
+func (t hteeteep) Header() http.Header {
+	return t.w.Header()
+}
+
+func (t hteeteep) Write(b []byte) (int, error) {
+	r, e := t.w.Write(b)
+	t.also.Write(b)
+	return r, e
+}
+
+func (t hteeteep) WriteHeader(s int) {
+	t.w.WriteHeader(s)
+	fmt.Fprintf(t.also, "STATUS: %d\n", s)
+}
+
 func main() {
+	stdout := true
+	quiet := false
 	port := 80
 	if env := os.Getenv("PORT"); env != "" {
 		parsed, err := strconv.Atoi(env)
@@ -191,12 +214,25 @@ func main() {
 		}
 		port = parsed
 	}
+
+	flag.BoolVar(&quiet, "quiet", quiet, "Don't print to stdout, too")
+
+	flag.Parse()
+
+	if quiet {
+		stdout = false
+	}
+
 	http.HandleFunc("/", func(w http.ResponseWriter, req *http.Request) {
+		var tee http.ResponseWriter
+		if stdout {
+			tee = hteeteep{w, os.Stdout}
+		}
 		switch {
 		case wantsJSON(req):
-			echoJSON(w, req)
+			echoJSON(tee, req)
 		default:
-			echoPlain(w, req)
+			echoPlain(tee, req)
 		}
 	})
 	log.Fatal(http.ListenAndServe(fmt.Sprintf(":%d", port), nil))

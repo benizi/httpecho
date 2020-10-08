@@ -22,6 +22,10 @@ func getSingleHeader(req *http.Request, name string) (string, bool) {
 	return "", false
 }
 
+func localAddr(req *http.Request) string {
+	return fmt.Sprintf("%v", req.Context().Value(http.LocalAddrContextKey))
+}
+
 func echoJSON(w http.ResponseWriter, req *http.Request) {
 	w.WriteHeader(http.StatusOK)
 	w.Header().Add("Content-Type", "application/json")
@@ -33,6 +37,12 @@ func echoJSON(w http.ResponseWriter, req *http.Request) {
 	}
 	if req.URL.User != nil {
 		ret["user"] = req.URL.User
+	}
+	ret["url"] = req.URL.String()
+	ret["host"] = req.Host
+	ret["addr"] = map[string]string{
+		"remote": req.RemoteAddr,
+		"local":  localAddr(req),
 	}
 	if len(req.Header) > 0 {
 		hdrs := map[string]interface{}{}
@@ -123,6 +133,10 @@ func echoPlain(w http.ResponseWriter, req *http.Request) {
 	if req.URL.User != nil {
 		fmt.Fprintf(w, "User: %v\n", req.URL.User)
 	}
+	fmt.Fprintf(w, "Full URL: %s\n", req.URL.String())
+	fmt.Fprintf(w, "Host: %s\n", req.Host)
+	fmt.Fprintf(w, "RemoteAddr: %s\n", req.RemoteAddr)
+	fmt.Fprintf(w, "LocalAddr: %v\n", localAddr(req))
 	if len(req.Header) > 0 {
 		io.WriteString(w, "Request Headers:\n")
 		for name, vals := range req.Header {
